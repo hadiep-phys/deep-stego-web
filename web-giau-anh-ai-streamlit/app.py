@@ -105,7 +105,7 @@ def get_hnet() -> nn.Module:
 
 @st.cache_resource(show_spinner="Đang tải mô hình RevealNet…")
 def get_rnet() -> nn.Module:
-    model = RevealNet(output_function=nn.Sigmoid)
+    model = RevealNet(output_function=nn.Sigmoid())
     return load_state(model, "RNET")
 
 
