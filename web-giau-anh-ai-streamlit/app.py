@@ -42,7 +42,7 @@ def setting(name: str) -> str:
 
 
 def checkpoint_file(kind: str) -> Path:
-    # Prefer files already present for local testing.
+    
     local_dir = ROOT / "checkPoint"
     if local_dir.is_dir():
         exact = local_dir / ("hnet.pth" if kind == "HNET" else "rnet.pth")
@@ -59,7 +59,7 @@ def checkpoint_file(kind: str) -> Path:
             f"và đặt {kind}_URL trong Streamlit Secrets."
         )
 
-    # Store MODEL weights only; never store uploaded USER images here.
+    
     model_dir = Path(tempfile.gettempdir()) / "deep_stego_models"
     model_dir.mkdir(parents=True, exist_ok=True)
     target = model_dir / ("hnet.pth" if kind == "HNET" else "rnet.pth")
@@ -89,7 +89,7 @@ def load_state(model: nn.Module, kind: str) -> nn.Module:
     state = torch.load(path, map_location="cpu", weights_only=True)
     if not isinstance(state, dict):
         raise ValueError(f"{kind}: checkpoint không phải state_dict.")
-    # Some checkpoints may come from nn.DataParallel.
+    
     if state and all(str(k).startswith("module.") for k in state):
         state = {k[len("module."):]: v for k, v in state.items()}
     model.load_state_dict(state, strict=True)
@@ -121,8 +121,7 @@ def open_image(uploaded) -> Image.Image:
 
 
 def make_tensor(image: Image.Image) -> torch.Tensor:
-    # Mirrors original utils.transformed.Resize([256,256]) + ToTensor():
-    # RGB, PIL bilinear resize, CHW float32 in [0,1], no mean/std normalization.
+    
     image = image.resize((SIZE, SIZE), resample=Image.Resampling.BILINEAR)
     array = np.asarray(image, dtype=np.uint8).copy()
     tensor = torch.from_numpy(array).permute(2, 0, 1).contiguous().float().div_(255.0)
@@ -149,7 +148,7 @@ def reveal(container: Image.Image) -> bytes:
     return tensor_png(get_rnet()(make_tensor(container)))
 
 
-# Giao diện tối giản theo thiết kế của nhóm.
+
 st.title("Steganography")
 st.caption("HCMUS - Group 7 - PHY00010")
 st.info(
