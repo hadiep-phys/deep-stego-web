@@ -27,7 +27,7 @@ SIZE = 256
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 Image.MAX_IMAGE_PIXELS = 20_000_000
 
-st.set_page_config(page_title="Giấu ảnh AI · HidingNet / RevealNet", page_icon="🖼️", layout="centered")
+st.set_page_config(page_title="Steganography", page_icon="🔐", layout="centered")
 torch.set_num_threads(min(2, os.cpu_count() or 1))
 
 
@@ -149,32 +149,46 @@ def reveal(container: Image.Image) -> bytes:
     return tensor_png(get_rnet()(make_tensor(container)))
 
 
-st.title("🖼️ Giấu ảnh & Khôi phục ảnh bằng AI")
-st.caption("HidingNet / RevealNet · Mô hình PyTorch gốc · Xử lý CPU")
-st.info("Ảnh được gửi đến máy chủ để xử lý bằng AI. Ứng dụng không chủ động lưu ảnh người dùng lên ổ đĩa hoặc cơ sở dữ liệu.")
-st.caption("Đầu ra 256×256. Luôn tải Container dưới dạng PNG; JPEG sẽ làm hỏng hoặc giảm khả năng khôi phục.")
+# Giao diện tối giản theo thiết kế của nhóm.
+st.title("Steganography")
+st.caption("HCMUS - Group 7 - PHY00010")
+st.info(
+    "Đầu ra 256×256. Nên tải Container dưới dạng PNG để đảm bảo khả năng "
+    "khôi phục. Website không lưu dữ liệu vào database."
+)
 
 hide_tab, reveal_tab = st.tabs(["🔐 Giấu ảnh", "🔎 Khôi phục ảnh"])
 
 with hide_tab:
     st.subheader("Cover + Secret → Container")
-    cover_file = st.file_uploader("Ảnh Cover", type=["png", "jpg", "jpeg", "webp"], key="cover_file")
-    secret_file = st.file_uploader("Ảnh Secret", type=["png", "jpg", "jpeg", "webp"], key="secret_file")
-    if st.button("Giấu ảnh", type="primary", disabled=not (cover_file and secret_file)):
+    cover_file = st.file_uploader(
+        "Ảnh Cover", type=["png", "jpg", "jpeg", "webp"], key="cover_file"
+    )
+    secret_file = st.file_uploader(
+        "Ảnh Secret", type=["png", "jpg", "jpeg", "webp"], key="secret_file"
+    )
+    if st.button("Giấu ảnh", disabled=not (cover_file and secret_file)):
         try:
             with st.spinner("Đang xử lý bằng HidingNet…"):
-                st.session_state["container_png"] = hide(open_image(cover_file), open_image(secret_file))
+                st.session_state["container_png"] = hide(
+                    open_image(cover_file), open_image(secret_file)
+                )
             st.success("Đã tạo ảnh Container.")
         except Exception as exc:
             st.error(f"Không thể giấu ảnh: {exc}")
     if "container_png" in st.session_state:
         st.image(st.session_state["container_png"], caption="Ảnh Container 256×256")
-        st.download_button("Tải Container.png", st.session_state["container_png"], "container.png", "image/png", key="download_container")
+        st.download_button(
+            "Tải Container.png", st.session_state["container_png"],
+            "container.png", "image/png", key="download_container"
+        )
 
 with reveal_tab:
     st.subheader("Container → Revealed")
-    container_file = st.file_uploader("Ảnh Container (PNG được tạo bằng HidingNet)", type=["png", "jpg", "jpeg", "webp"], key="container_file")
-    if st.button("Khôi phục ảnh", type="primary", disabled=not container_file):
+    container_file = st.file_uploader(
+        "Ảnh Container", type=["png", "jpg", "jpeg", "webp"], key="container_file"
+    )
+    if st.button("Khôi phục ảnh", disabled=not container_file):
         try:
             with st.spinner("Đang xử lý bằng RevealNet…"):
                 st.session_state["revealed_png"] = reveal(open_image(container_file))
@@ -183,11 +197,13 @@ with reveal_tab:
             st.error(f"Không thể khôi phục ảnh: {exc}")
     if "revealed_png" in st.session_state:
         st.image(st.session_state["revealed_png"], caption="Ảnh Revealed 256×256")
-        st.download_button("Tải Revealed.png", st.session_state["revealed_png"], "revealed.png", "image/png", key="download_revealed")
+        st.download_button(
+            "Tải Revealed.png", st.session_state["revealed_png"],
+            "revealed.png", "image/png", key="download_revealed"
+        )
 
 st.divider()
 if st.button("Xóa kết quả đang hiển thị khỏi phiên này"):
     st.session_state.pop("container_png", None)
     st.session_state.pop("revealed_png", None)
     st.rerun()
-st.caption("Mô hình AI này không khôi phục ảnh hoàn toàn không mất mát. Kết quả phụ thuộc checkpoint và ảnh đầu vào.")
